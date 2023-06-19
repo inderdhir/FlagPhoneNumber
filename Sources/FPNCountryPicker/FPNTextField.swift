@@ -6,6 +6,7 @@
 //  Copyright (c) 2017 Aurélien Grifasi. All rights reserved.
 //
 
+import libPhoneNumber
 import UIKit
 
 open class FPNTextField: UITextField {
@@ -30,7 +31,7 @@ open class FPNTextField: UITextField {
 
 	private var phoneCodeTextField: UITextField = UITextField()
 
-	private lazy var phoneUtil: NBPhoneNumberUtil = NBPhoneNumberUtil()
+    private lazy var phoneUtil: NBPhoneNumberUtil = NBPhoneNumberUtil.sharedInstance()
 	private var nbPhoneNumber: NBPhoneNumber?
 	private var formatter: NBAsYouTypeFormatter?
 
@@ -133,11 +134,8 @@ open class FPNTextField: UITextField {
 	private func setupLeftView() {
 		leftView = UIView()
 		leftViewMode = .always
-		if #available(iOS 9.0, *) {
-			phoneCodeTextField.semanticContentAttribute = .forceLeftToRight
-		} else {
-			// Fallback on earlier versions
-		}
+        
+        phoneCodeTextField.semanticContentAttribute = .forceLeftToRight
 
 		leftView?.addSubview(flagButton)
 		leftView?.addSubview(phoneCodeTextField)
@@ -166,9 +164,9 @@ open class FPNTextField: UITextField {
 
 	open override func leftViewRect(forBounds bounds: CGRect) -> CGRect {
 		let size = leftViewSize
-		let width: CGFloat = min(bounds.size.width, size.width)
-		let height: CGFloat = min(bounds.size.height, size.height)
-		let newRect: CGRect = CGRect(x: bounds.minX, y: bounds.minY, width: width, height: height)
+		let width = min(bounds.size.width, size.width)
+		let height = min(bounds.size.height, size.height)
+		let newRect = CGRect(x: bounds.minX, y: bounds.minY, width: width, height: height)
 
 		return newRect
 	}
@@ -228,7 +226,7 @@ open class FPNTextField: UITextField {
 
 	/// Get the current formatted phone number
 	open func getFormattedPhoneNumber(format: FPNFormat) -> String? {
-		return try? phoneUtil.format(nbPhoneNumber, numberFormat: convert(format: format))
+		try? phoneUtil.format(nbPhoneNumber, numberFormat: convert(format: format))
 	}
 
 	/// For Objective-C, Get the current formatted phone number
@@ -267,17 +265,14 @@ open class FPNTextField: UITextField {
 	open func setFlag(countryCode: FPNCountryCode) {
 		let countries = countryRepository.countries
 
-		for country in countries {
-			if country.code == countryCode {
-				return fpnDidSelect(country: country)
-			}
+        for country in countries where country.code == countryCode {
+            return fpnDidSelect(country: country)
 		}
 	}
 
 	/// Set the country image according to country code. Example "FR"
 	@objc open func setFlag(key: FPNOBJCCountryKey) {
 		if let code = FPNOBJCCountryCode[key], let countryCode = FPNCountryCode(rawValue: code) {
-
 			setFlag(countryCode: countryCode)
 		}
 	}
@@ -306,24 +301,28 @@ open class FPNTextField: UITextField {
 
 	/// Set the country list excluding the provided countries
 	@objc open func setCountries(excluding countries: [Int]) {
-		let countryCodes: [FPNCountryCode] = countries.compactMap({ index in
-			if let key = FPNOBJCCountryKey(rawValue: index), let code = FPNOBJCCountryCode[key], let countryCode = FPNCountryCode(rawValue: code) {
+		let countryCodes: [FPNCountryCode] = countries.compactMap { index in
+			if let key = FPNOBJCCountryKey(rawValue: index),
+               let code = FPNOBJCCountryCode[key],
+               let countryCode = FPNCountryCode(rawValue: code) {
 				return countryCode
 			}
 			return nil
-		})
+		}
 
 		countryRepository.setup(without: countryCodes)
 	}
 
 	/// Set the country list including the provided countries
 	@objc open func setCountries(including countries: [Int]) {
-		let countryCodes: [FPNCountryCode] = countries.compactMap({ index in
-			if let key = FPNOBJCCountryKey(rawValue: index), let code = FPNOBJCCountryCode[key], let countryCode = FPNCountryCode(rawValue: code) {
+		let countryCodes: [FPNCountryCode] = countries.compactMap { index in
+			if let key = FPNOBJCCountryKey(rawValue: index),
+               let code = FPNOBJCCountryCode[key],
+               let countryCode = FPNCountryCode(rawValue: code) {
 				return countryCode
 			}
 			return nil
-		})
+		}
 
 		countryRepository.setup(with: countryCodes)
 	}
@@ -388,9 +387,7 @@ open class FPNTextField: UITextField {
 
 	private func clean(string: String) -> String {
 		var allowedCharactersSet = CharacterSet.decimalDigits
-
 		allowedCharactersSet.insert("+")
-
 		return string.components(separatedBy: allowedCharactersSet.inverted).joined(separator: "")
 	}
 
@@ -413,7 +410,6 @@ open class FPNTextField: UITextField {
 		do {
 			let parsedPhoneNumber: NBPhoneNumber = try phoneUtil.parse(phoneNumber, defaultRegion: countryCode.rawValue)
 			let isValid = phoneUtil.isValidNumber(parsedPhoneNumber)
-
 			return isValid ? parsedPhoneNumber : nil
 		} catch _ {
 			return nil
@@ -421,23 +417,20 @@ open class FPNTextField: UITextField {
 	}
 
 	private func remove(dialCode: String, in phoneNumber: String) -> String {
-		return phoneNumber.replacingOccurrences(of: "\(dialCode) ", with: "").replacingOccurrences(of: "\(dialCode)", with: "")
+		phoneNumber.replacingOccurrences(of: "\(dialCode) ", with: "").replacingOccurrences(of: "\(dialCode)", with: "")
 	}
 
 	private func getToolBar(with items: [UIBarButtonItem]) -> UIToolbar {
-		let toolbar: UIToolbar = UIToolbar()
-
+		let toolbar = UIToolbar()
 		toolbar.barStyle = UIBarStyle.default
 		toolbar.items = items
 		toolbar.sizeToFit()
-
 		return toolbar
 	}
 
 	private func getCountryListBarButtonItems() -> [UIBarButtonItem] {
 		let space = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
 		let doneButton = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(dismissCountries))
-
 		doneButton.accessibilityLabel = "doneButton"
 
 		return [space, doneButton]

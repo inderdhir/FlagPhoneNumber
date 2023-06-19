@@ -15,7 +15,7 @@ class NibLoadingView: UIView {
 	}
 
 	fileprivate func nibSetup() {
-		backgroundColor = UIColor.clear
+		backgroundColor = .clear
 
 		view = loadViewFromNib()
 		view.frame = bounds

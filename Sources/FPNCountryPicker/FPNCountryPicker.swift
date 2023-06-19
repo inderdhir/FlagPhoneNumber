@@ -41,16 +41,15 @@ open class FPNCountryPicker: UIPickerView, UIPickerViewDelegate, UIPickerViewDat
 	// MARK: - Picker Methods
 
 	open func numberOfComponents(in pickerView: UIPickerView) -> Int {
-		return 1
+		1
 	}
 
 	open func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
-		return repository?.countries.count ?? 0
+		repository?.countries.count ?? 0
 	}
 
 	open func pickerView(_ pickerView: UIPickerView, viewForRow row: Int, forComponent component: Int, reusing view: UIView?) -> UIView {
-		var resultView: FPNCountryView
-		let country = repository!.countries[row]
+		let resultView: FPNCountryView
 
 		if view == nil {
 			resultView = FPNCountryView()
@@ -58,7 +57,9 @@ open class FPNCountryPicker: UIPickerView, UIPickerViewDelegate, UIPickerViewDat
 			resultView = view as! FPNCountryView
 		}
 
-		resultView.setup(country)
+        if let country = repository?.countries[row] {
+            resultView.setup(country)
+        }
 
 		if !showPhoneNumbers {
 			resultView.countryCodeLabel.isHidden = true
